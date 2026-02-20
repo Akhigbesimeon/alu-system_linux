@@ -85,7 +85,7 @@ void print_symbol_table64(Elf64_Shdr *section_header, Elf64_Sym *symbol_table,
 			if (symbol_type != 'U' && symbol_type != 'w')
 				printf("%016lx %c %s\n", symbol.st_value, symbol_type, symbol_name);
 			else
-				printf("                 %c %s\n", symbol_type, symbol_name);
+				printf("		 %c %s\n", symbol_type, symbol_name);
 		}
 	}
 }

@@ -10,47 +10,41 @@
  */
 char get_symbol_type(Elf32_Sym symbol, Elf32_Shdr *section_headers)
 {
-	char symbol_type = '?';
-	Elf32_Shdr symbol_section;
+	Elf32_Shdr sec;
 
 	if (ELF32_ST_BIND(symbol.st_info) == STB_WEAK)
 	{
 		if (symbol.st_shndx == SHN_UNDEF)
-			symbol_type = 'w';
-		else if (ELF32_ST_TYPE(symbol.st_info) == STT_OBJECT)
-			symbol_type = 'V';
-		else
-			symbol_type = 'W';
+			return ('w');
+		return (ELF32_ST_TYPE(symbol.st_info) == STT_OBJECT ? 'V' : 'W');
 	}
-	else if (symbol.st_shndx == SHN_UNDEF)
-		symbol_type = 'U';
-	else if (symbol.st_shndx == SHN_ABS)
-		symbol_type = 'A';
-	else if (symbol.st_shndx == SHN_COMMON)
-		symbol_type = 'C';
-	else if (symbol.st_shndx < SHN_LORESERVE)
+	if (symbol.st_shndx == SHN_UNDEF)
+		return ('U');
+	if (symbol.st_shndx == SHN_ABS)
+		return ('A');
+	if (symbol.st_shndx == SHN_COMMON)
+		return ('C');
+	if (symbol.st_shndx < SHN_LORESERVE)
 	{
-		symbol_section = section_headers[symbol.st_shndx];
+		sec = section_headers[symbol.st_shndx];
 		if (ELF32_ST_BIND(symbol.st_info) == STB_GNU_UNIQUE)
-			symbol_type = 'u';
-		else if (symbol_section.sh_type == SHT_NOBITS &&
-			 symbol_section.sh_flags == (SHF_ALLOC | SHF_WRITE))
-			symbol_type = 'B';
-		else if (symbol_section.sh_type == SHT_PROGBITS)
+			return ('u');
+		if (sec.sh_type == SHT_NOBITS && sec.sh_flags == (SHF_ALLOC | SHF_WRITE))
+			return ('B');
+		if (sec.sh_type == SHT_PROGBITS)
 		{
-			if (symbol_section.sh_flags == (SHF_ALLOC | SHF_EXECINSTR))
-				symbol_type = 'T';
-			else if (symbol_section.sh_flags == SHF_ALLOC)
-				symbol_type = 'R';
-			else if (symbol_section.sh_flags == (SHF_ALLOC | SHF_WRITE))
-				symbol_type = 'D';
+			if (sec.sh_flags == (SHF_ALLOC | SHF_EXECINSTR))
+				return ('T');
+			if (sec.sh_flags == (SHF_ALLOC | SHF_WRITE))
+				return ('D');
+			if (sec.sh_flags == SHF_ALLOC)
+				return ('R');
 		}
-		else if (symbol_section.sh_type == SHT_DYNAMIC)
-			symbol_type = 'D';
-		else
-			symbol_type = 't';
+		if (sec.sh_type == SHT_DYNAMIC)
+			return ('D');
+		return ('t');
 	}
-	return (symbol_type);
+	return ('?');
 }
 
 /**
@@ -85,7 +79,7 @@ void print_symbol_table32(Elf32_Shdr *section_header, Elf32_Sym *symbol_table,
 			if (symbol_type != 'U' && symbol_type != 'w')
 				printf("%08x %c %s\n", symbol.st_value, symbol_type, symbol_name);
 			else
-				printf("         %c %s\n", symbol_type, symbol_name);
+				printf("	 %c %s\n", symbol_type, symbol_name);
 		}
 	}
 }
