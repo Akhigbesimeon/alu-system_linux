@@ -1,8 +1,8 @@
 # Compiler to use
 CC = gcc
 
-# Compiler flags to ensure strict compliance with code standards and to enable debugging
-CFLAGS = -Wall -Werror -Wextra -pedantic -g -std=c99
+# Changed to -std=gnu89 to ensure strict compliance with Betty/ALX standards
+CFLAGS = -Wall -Werror -Wextra -pedantic -g -std=gnu89
 
 # Additional flags for debugging
 DEBUGFLAGS = -g
@@ -35,12 +35,18 @@ $(TARGET_0): $(SOURCE_0) $(HEADERS_0)
 $(TARGET_1): $(SOURCE_1)
 	$(CC) $(CFLAGS) -o $(TARGET_1) $(SOURCE_1)
 
-# Rule to clean up the compiled binaries and object files
+# Rule to clean up object files and temporary files
 clean:
-	rm -f $(TARGET_0) $(TARGET_1)
 	rm -f *.o
 	rm -f *.out
 	rm -f *~
 
+# Rule to fully clean the directory (removes executables too)
+fclean: clean
+	rm -f $(TARGET_0) $(TARGET_1)
+
+# Rule to recompile everything from scratch
+re: fclean all
+
 # Declaring phony targets to avoid conflicts with files of the same name
-.PHONY: all clean debug
+.PHONY: all clean fclean re debug
