@@ -10,47 +10,41 @@
  */
 char get_symbol_type64(Elf64_Sym symbol, Elf64_Shdr *section_headers)
 {
-	char symbol_type = '?';
-	Elf64_Shdr symbol_section;
+	Elf64_Shdr sec;
 
 	if (ELF64_ST_BIND(symbol.st_info) == STB_WEAK)
 	{
 		if (symbol.st_shndx == SHN_UNDEF)
-			symbol_type = 'w';
-		else if (ELF64_ST_TYPE(symbol.st_info) == STT_OBJECT)
-			symbol_type = 'V';
-		else
-			symbol_type = 'W';
+			return ('w');
+		return (ELF64_ST_TYPE(symbol.st_info) == STT_OBJECT ? 'V' : 'W');
 	}
-	else if (symbol.st_shndx == SHN_UNDEF)
-		symbol_type = 'U';
-	else if (symbol.st_shndx == SHN_ABS)
-		symbol_type = 'A';
-	else if (symbol.st_shndx == SHN_COMMON)
-		symbol_type = 'C';
-	else if (symbol.st_shndx < SHN_LORESERVE)
+	if (symbol.st_shndx == SHN_UNDEF)
+		return ('U');
+	if (symbol.st_shndx == SHN_ABS)
+		return ('A');
+	if (symbol.st_shndx == SHN_COMMON)
+		return ('C');
+	if (symbol.st_shndx < SHN_LORESERVE)
 	{
-		symbol_section = section_headers[symbol.st_shndx];
+		sec = section_headers[symbol.st_shndx];
 		if (ELF64_ST_BIND(symbol.st_info) == STB_GNU_UNIQUE)
-			symbol_type = 'u';
-		else if (symbol_section.sh_type == SHT_NOBITS &&
-			 symbol_section.sh_flags == (SHF_ALLOC | SHF_WRITE))
-			symbol_type = 'B';
-		else if (symbol_section.sh_type == SHT_PROGBITS)
+			return ('u');
+		if (sec.sh_type == SHT_NOBITS && sec.sh_flags == (SHF_ALLOC | SHF_WRITE))
+			return ('B');
+		if (sec.sh_type == SHT_PROGBITS)
 		{
-			if (symbol_section.sh_flags == (SHF_ALLOC | SHF_EXECINSTR))
-				symbol_type = 'T';
-			else if (symbol_section.sh_flags == SHF_ALLOC)
-				symbol_type = 'R';
-			else if (symbol_section.sh_flags == (SHF_ALLOC | SHF_WRITE))
-				symbol_type = 'D';
+			if (sec.sh_flags == (SHF_ALLOC | SHF_EXECINSTR))
+				return ('T');
+			if (sec.sh_flags == (SHF_ALLOC | SHF_WRITE))
+				return ('D');
+			if (sec.sh_flags == SHF_ALLOC)
+				return ('R');
 		}
-		else if (symbol_section.sh_type == SHT_DYNAMIC)
-			symbol_type = 'D';
-		else
-			symbol_type = 't';
+		if (sec.sh_type == SHT_DYNAMIC)
+			return ('D');
+		return ('t');
 	}
-	return (symbol_type);
+	return ('?');
 }
 
 /**
