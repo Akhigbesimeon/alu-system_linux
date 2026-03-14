@@ -5,7 +5,6 @@
 #include <sys/user.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "syscalls.h"
 
 /**
  * main - Traces a command and prints syscall names using syscalls.h
