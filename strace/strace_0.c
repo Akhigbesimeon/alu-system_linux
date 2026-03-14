@@ -4,7 +4,6 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <sys/reg.h>
 
 /**
  * main - Traces a command and prints syscall numbers
@@ -32,40 +31,42 @@ int main(int argc, char *argv[], char *envp[])
 
     if (child == 0)
     {
-        /* CHILD: Start tracing and execute the command */
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        /* Stop the child so the parent can set options */
+        kill(getpid(), SIGSTOP);
         execve(argv[1], argv + 1, envp);
         perror("execve");
         exit(1);
     }
     else
     {
-        /* PARENT: Wait for child to stop at the first signal */
-        wait(&status);
-        /* Set option to distinguish syscalls from signals */
+        waitpid(child, &status, 0);
+        /* Set option to distinguish syscall stops from signals */
         ptrace(PTRACE_SETOPTIONS, child, 0, PTRACE_O_TRACESYSGOOD);
 
-        while (WIFSTOPPED(status))
+        while (1)
         {
-            /* Intercept entry into syscall */
+            /* 1. Stop at Syscall Entry */
             if (ptrace(PTRACE_SYSCALL, child, NULL, NULL) == -1)
                 break;
-            wait(&status);
-
-            if (!WIFSTOPPED(status))
+            waitpid(child, &status, 0);
+            if (WIFEXITED(status) || WIFSIGNALED(status))
                 break;
 
-            /* Read register state to get syscall number */
+            /* 2. Read and print syscall number at Entry */
             if (ptrace(PTRACE_GETREGS, child, NULL, &regs) == -1)
                 break;
-
-            /* Print orig_rax (syscall number) */
+            
+            /* In x86_64, orig_rax holds the syscall number */
             printf("%lu\n", (unsigned long)regs.orig_rax);
+            fflush(stdout);
 
-            /* Run until syscall exit to avoid double-printing */
+            /* 3. Stop at Syscall Exit (and ignore it) */
             if (ptrace(PTRACE_SYSCALL, child, NULL, NULL) == -1)
                 break;
-            wait(&status);
+            waitpid(child, &status, 0);
+            if (WIFEXITED(status) || WIFSIGNALED(status))
+                break;
         }
     }
     return (0);
