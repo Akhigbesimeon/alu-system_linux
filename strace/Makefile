@@ -1,19 +1,50 @@
-CC       = gcc
-CFLAGS   = -g3 -Wall -Werror -Wextra -pedantic
-FILENAME = strace
+CC      = gcc
+CFLAGS  = -Wall -Werror -Wextra -pedantic
+RM      = rm -f
 
-0_SRC = 0-$(FILENAME).c
-$(FILENAME)_0: $(0_SRC:.c=.o)
-	$(CC) $(CFLAGS) $(0_SRC) -o $(FILENAME)_0
+# Binaries
+NAME0   = strace_0
+NAME1   = strace_1
+NAME2   = strace_2
+NAME3   = strace_3
 
-1_SRC = 1-$(FILENAME).c
-$(FILENAME)_1: $(1_SRC:.c=.o)
-	$(CC) $(CFLAGS) $(1_SRC) -o $(FILENAME)_1
 
-2_SRC = 2-$(FILENAME).c
-$(FILENAME)_2: $(2_SRC:.c=.o)
-	$(CC) $(CFLAGS) $(2_SRC) -o $(FILENAME)_2
+# Sources
+SRC0    = strace_0.c
+SRC1    = strace_1.c
+SRC2    = strace_2.c
+SRC3    = strace_3.c
 
-3_SRC = 3-$(FILENAME).c
-$(FILENAME)_3: $(3_SRC:.c=.o)
-	$(CC) $(CFLAGS) $(3_SRC) -o $(FILENAME)_3
+# Phony targets (not files)
+.PHONY: all clean fclean re strace_0 strace_1 strace_2
+
+# Default target builds everything
+all: $(NAME0) $(NAME1) $(NAME2)
+
+# Specific rules for each version
+$(NAME0): $(SRC0)
+	$(CC) $(CFLAGS) $(SRC0) -o $(NAME0)
+
+$(NAME1): $(SRC1) syscalls.h
+	$(CC) $(CFLAGS) $(SRC1) -o $(NAME1)
+
+$(NAME2): $(SRC2) syscalls.h
+	$(CC) $(CFLAGS) $(SRC2) -o $(NAME2)
+
+$(NAME3): $(SRC3) syscalls.h
+	$(CC) $(CFLAGS) $(SRC2) -o $(NAME3)
+
+# Explicit rule aliases for the checker
+strace_0: $(NAME0)
+strace_1: $(NAME1)
+strace_2: $(NAME2)
+strace_3: $(NAME3)
+
+# Cleanup rules
+clean:
+	$(RM) *.o
+
+fclean: clean
+	$(RM) $(NAME0) $(NAME1) $(NAME2) $(NAME3)
+
+re: fclean all
